@@ -5,14 +5,14 @@
 
     var gsUtils = {
 
-        SCREEN_CAPTURE: 'screenCapture',
+        SHOW_PREVIEW: 'preview',
+        PREVIEW_QUALITY: 'previewQuality',
         ONLINE_CHECK: 'onlineCheck',
         BATTERY_CHECK: 'batteryCheck',
         UNSUSPEND_ON_FOCUS: 'gsUnsuspendOnFocus',
         SUSPEND_TIME: 'gsTimeToSuspend',
         IGNORE_PINNED: 'gsDontSuspendPinned',
         IGNORE_FORMS: 'gsDontSuspendForms',
-        IGNORE_AUDIO: 'gsDontSuspendAudio',
         IGNORE_CACHE: 'gsIgnoreCache',
         ADD_CONTEXT: 'gsAddContextMenu',
         NO_NAG: 'gsNoNag',
@@ -37,13 +37,13 @@
         getSettingsDefaults: function () {
 
             var defaults = {};
-            defaults[this.SCREEN_CAPTURE] = '0';
+            defaults[this.SHOW_PREVIEW] = false;
+            defaults[this.PREVIEW_QUALITY] = false;
             defaults[this.ONLINE_CHECK] = false;
             defaults[this.BATTERY_CHECK] = false;
             defaults[this.UNSUSPEND_ON_FOCUS] = false;
             defaults[this.IGNORE_PINNED] = true;
             defaults[this.IGNORE_FORMS] = true;
-            defaults[this.IGNORE_AUDIO] = true;
             defaults[this.IGNORE_CACHE] = false;
             defaults[this.ADD_CONTEXT] = true;
             defaults[this.SUSPEND_TIME] = '60';
@@ -207,6 +207,7 @@
         },
 
 
+
        /**
         * INDEXEDDB FUNCTIONS
         */
@@ -303,33 +304,17 @@
         },
 
         addSuspendedTabInfo: function (tabProperties, callback) {
-            var self = this,
-                server;
+            var self = this;
 
             if (!tabProperties.url) {
                 console.log('tabProperties.url not set.');
                 return;
             }
 
-            //first check to see if tabProperties already exists
             this.getDb().then(function (s) {
-                server = s;
-                return server.query(self.DB_SUSPENDED_TABINFO).filter('url', tabProperties.url).execute();
-
-            }).then(function(result) {
-                if (result.length > 0) {
-                    result = result[0];
-                    //copy across id
-                    tabProperties.id = result.id;
-                    //then update based on that id
-                    server.update(self.DB_SUSPENDED_TABINFO, tabProperties).then(function() {
-                        if (typeof(callback) === "function") callback();
-                    });
-                } else {
-                    server.add(self.DB_SUSPENDED_TABINFO, tabProperties).then(function() {
-                        if (typeof(callback) === "function") callback();
-                    });
-                }
+                s.add(self.DB_SUSPENDED_TABINFO , tabProperties).then(function() {
+                    if (typeof(callback) === "function") callback();
+                });
             });
         },
 
@@ -609,53 +594,42 @@
             return Math.floor(Math.random() * 1000000) + "";
         },
 
-        generateSuspendedUrl: function (tabProperties) {
-            var args = '#' +
-                'ttl=' + encodeURIComponent(tabProperties.title) + '&' +
-                // 'fav=' + encodeURIComponent(tab.favIconUrl) + '&' +
-                'uri=' + (tabProperties.url);
+        generateSuspendedUrl: function (tabUrl, useBlank) {
+            var args = '#uri=' + tabUrl;//encodeURIComponent(tabUrl);
+            useBlank = useBlank || false;
 
-            return chrome.extension.getURL('suspended.html' + args);
+            if (useBlank) {
+                return chrome.extension.getURL('clean.html');
+            } else {
+                return chrome.extension.getURL('suspended.html' + args);
+            }
         },
 
-        getHashVariable: function(key, urlStr) {
-
-            var valuesByKey = {},
-                keyPairRegEx = /^(.+)=(.+)/,
-                hashStr;
-
-            //extract hash component from url
-            hashStr = urlStr.replace(/^[^#]+#(.*)/, '$1');
-
-            if (hashStr.length === 0) {
-                return false;
-            }
+        getSuspendedUrl: function (hash) {
+            var url,
+                re = /%[0-9a-f]{2}/i;
 
             //remove possible # prefix
-            hashStr = hashStr.replace(/^#(.*)/, '$1');
-
-            //handle possible unencoded final var called 'uri'
-            if (hashStr.indexOf('uri=') >= 0) {
-                valuesByKey.uri = hashStr.split('uri=')[1];
-                hashStr = hashStr.split('uri=')[0];
+            if (hash && hash.substring(0,1) === '#') {
+                hash = hash.substring(1,hash.length);
             }
 
-            hashStr.split('&').forEach(function (keyPair) {
-                if (keyPair && keyPair.match(keyPairRegEx)) {
-                    valuesByKey[keyPair.replace(keyPairRegEx, '$1')] = keyPair.replace(keyPairRegEx, '$2');
+            //if it is an old style url encoded hash
+            if (hash.length > 0 && hash.indexOf('url=') === 0) {
+                url = hash.substring(4,hash.length);
+                if (re.exec(url) !== null) {
+                    return decodeURIComponent(url);
+                } else {
+                    return url;
                 }
-            });
-            return valuesByKey[key] || false;
-        },
-        getSuspendedTitle: function(urlStr) {
-            return decodeURIComponent(this.getHashVariable('ttl', urlStr) || '');
-        },
-        getSuspendedUrl: function (urlStr) {
-            return this.getHashVariable('uri', urlStr);
-        },
 
-        htmlEncode: function (text) {
-            return document.createElement('pre').appendChild(document.createTextNode(text)).parentNode.innerHTML;
+            //if it is a new unencoded hash
+            } else if (hash.length > 0 && hash.indexOf('uri=') === 0) {
+                return hash.substring(4,hash.length);
+
+            } else {
+                return false;
+            }
         },
 
         getHumanDate: function (date) {
@@ -681,11 +655,6 @@
             return curr_date + sup + ' ' + m_names[curr_month] + ' ' + curr_year;
         },
 
-        getChromeVersion: function () {
-            var raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
-            return raw ? parseInt(raw[2], 10) : false;
-        },
-
         generateHashCode: function (text) {
             var hash = 0, i, chr, len;
             if (text.length == 0) return hash;
@@ -700,9 +669,8 @@
         getRootUrl: function (url) {
             var rootUrlStr;
 
-            url = url || '';
             if (url.indexOf('suspended.html') > 0) {
-                url = gsUtils.getSuspendedUrl(url);
+                url = gsUtils.getSuspendedUrl(url.split('suspended.html')[1]);
             }
 
             rootUrlStr = url;
@@ -851,18 +819,7 @@
                     });
                 });
             }
-            if (oldVersion < 6.30) {
 
-                if (this.getOption('preview')) {
-                    if (this.getOption('previewQuality') === '0.1') {
-                        this.setOption(this.SCREEN_CAPTURE, '1');
-                    } else {
-                        this.setOption(this.SCREEN_CAPTURE, '2');
-                    }
-                } else {
-                    this.setOption(this.SCREEN_CAPTURE, '0');
-                }
-            }
         },
 
         performOldMigration: function (oldVersion, callback) {
@@ -1077,7 +1034,7 @@
 
                 tabId = parseInt(tab.id);
                 tabSuspendedUrl = tab.url;
-                tabOriginalUrl = self.getSuspendedUrl(tab.url);
+                tabOriginalUrl = self.getSuspendedUrl(tab.url.split('suspended.html')[1]);
                 tabTitle = tabOriginalUrl.split('//')[1];
                 tabHistoryDate = new Date(tab.lastVisitTime);
 
@@ -1145,7 +1102,7 @@
             gsHistory.forEach(function (tabProperties) {
 
                 //convert all tab urls into suspended urls
-                tabProperties.url = self.generateSuspendedUrl(tabProperties);
+                tabProperties.url = self.generateSuspendedUrl(tabProperties.url);
 
                 curTab = self.getTabFromWindow(tabProperties.url, tgsTabsWindow);
                 if (!curTab) {

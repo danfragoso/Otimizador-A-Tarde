@@ -38,9 +38,9 @@ var sessionUtils = (function () {
                             curUrl = curTab.url;
 
                             if (suspendMode && curUrl.indexOf('suspended.html') < 0 && !chrome.extension.getBackgroundPage().tgs.isSpecialTab(curTab)) {
-                                curUrl = gsUtils.generateSuspendedUrl(curTab);
+                                curUrl = gsUtils.generateSuspendedUrl(curUrl);
                             } else if (!suspendMode && curUrl.indexOf('suspended.html') > 0) {
-                                curUrl = gsUtils.getSuspendedUrl(curTab.url);
+                                curUrl = gsUtils.getSuspendedUrl(curTab.url.split('suspended.html')[1]);
                             }
                             chrome.tabs.create({windowId: newWindow.id, url: curUrl, pinned: curTab.pinned, active: false});
                         });
@@ -91,7 +91,7 @@ var sessionUtils = (function () {
             session.windows.forEach(function (curWindow, index) {
                 curWindow.tabs.forEach(function (curTab, tabIndex) {
                     if (curTab.url.indexOf("suspended.html") > 0) {
-                        dataString += gsUtils.getSuspendedUrl(curTab.url) + '\n';
+                        dataString += gsUtils.getSuspendedUrl(curTab.url.split('suspended.html')[1]) + '\n';
                     } else {
                         dataString += curTab.url + '\n';
                     }
@@ -264,7 +264,7 @@ var sessionUtils = (function () {
             'data-sessionId': window.sessionId
         });
 
-        windowHeading = createEl('span', {}, 'Window ' + (count + 1) + ':\u00A0');
+        windowHeading = createEl('span', {}, 'Window ' + (count + 1) + ':&nbsp;');
 
         groupUnsuspendCurrent = createEl('a', {
             'class': 'groupLink',
@@ -350,7 +350,7 @@ var sessionUtils = (function () {
         var el = document.createElement(elType);
         attributes = attributes || {};
         el = setElAttributes(el, attributes);
-        el.innerHTML = gsUtils.htmlEncode(text || '');
+        el.innerHTML = text || '';
         return el;
     }
     function setElAttributes(el, attributes) {

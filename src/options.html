@@ -3,7 +3,7 @@
 	<link rel="stylesheet" href="css/font-awesome.min.css">
 	<link type="text/css" href="css/style.css" rel="stylesheet">
 	<script type="text/javascript" src="js/options.js"></script>
-	<title>The Great Suspender - Settings</title>
+	<title>Otimizador A Tarde - Gerenciamento</title>
 </head>
 
 
@@ -11,108 +11,92 @@
 
 <div class="mainContent">
 
-	<h1 class="pageHeader"><img src="img/icon64_hidden.png" class="headerIcon" />The Great Suspender</h1>
+	<h1 class="pageHeader"><img src="img/loguinho.png" class="headerIcon" />Otimizador A Tarde</h1>
 
 	<div class="contentNav">
 		<ul>
-			<li><a class='active' href='options.html'>General settings</a></li>
-			<li><a href='history.html'>Session management</a></li>
-			<li><a href='shortcuts.html'>Keyboard shortcuts</a></li>
-			<li><a href='about.html'>Support</a></li>
+			<li><a class='active' href='options.html'>Configurações gerais</a></li>
+			<li><a href='history.html'>Gerenciamento de abas</a></li>
+			<li><a href='shortcuts.html'>Atalhos de teclado</a></li>
+			<li><a href='about.html'>Sobre</a></li>
 		</ul>
 	</div>
 
 	<div class="content">
-		<h2>Suspend tab settings</h2>
+		<h2>Configurações de aba suspensa</h2>
 		<div class="formRow">
-			<label id="timeToSuspendLbl" for="timeToSuspend">Automatically suspend tabs after:</label>
+			<label id="timeToSuspendLbl" for="timeToSuspend">Suspender aba automaticamente após:</label>
 			<br />
 			<select id="timeToSuspend" class='option' style="margin-top: 8px;">
-				<option value="0">Never</option>
-				<option value="0.33">20 seconds</option>
-				<option value="1">1 min</option>
-				<option value="5">5 mins</option>
-				<option value="10">10 mins</option>
-				<option value="15">15 mins</option>
-				<option value="30">30 mins</option>
-				<option value="60">1 hour</option>
-				<option value="120">2 hours</option>
-				<option value="240">4 hours</option>
-				<option value="360">6 hours</option>
-				<option value="720">12 hours</option>
-				<option value="1440">1 day</option>
-				<option value="2880">2 days</option>
-				<option value="4320">3 days</option>
+				<option value="0">Nunca</option>
+				<option value="0.33">20 segundos</option>
+				<option value="1">1 minuto</option>
+				<option value="5">5 minutos</option>
+				<option value="10">10 minutos</option>
+				<option value="15">15 minutos</option>
+				<option value="30">30 minutos</option>
+				<option value="60">1 hora</option>
+				<option value="120">2 horas</option>
+				<option value="240">4 horas</option>
+				<option value="360">6 horas</option>
+				<option value="720">12 horas</option>
+				<option value="1440">1 dia</option>
+				<option value="2880">2 dias</option>
+				<option value="4320">3 dias</option>
 			</select>
 		</div>
 		<div class="formRow autoSuspendOption">
 			<input type="checkbox" id="dontSuspendPinned" class='option' />
-			<label for="dontSuspendPinned" class="cbLabel">Do not suspend pinned tabs</label>
+			<label for="dontSuspendPinned" class="cbLabel">Não suspenda abas fixas</label>
 		</div>
 		<div class="formRow autoSuspendOption">
 			<input type="checkbox" id="dontSuspendForms" class='option' />
-			<label for="dontSuspendForms" class="cbLabel">Do not suspend tabs that contain unsaved form inputs</label>
+			<label for="dontSuspendForms" class="cbLabel">Não suspenda abas com formulários e textos não salvos</label>
 		</div>
-		<div class="formRow autoSuspendOption">
-			<input type="checkbox" id="dontSuspendAudio" class='option' />
-			<label for="dontSuspendAudio" class="cbLabel">Do not suspend tabs that are playing audio</label>
-		</div>
-		<div id="audibleOptionNote" class="gsNote">You must have chrome version 45 or higher to use this feature.</div>
 		<div class="formRow autoSuspendOption">
 			<input type="checkbox" id="onlineCheck" class='option' />
-			<label for="onlineCheck" class="cbLabel">Only auto-suspend if connected to the internet</label>
+			<label for="onlineCheck" class="cbLabel">Só suspenda automaticamente se conectado a internet</label>
 		</div>
 		<div class="formRow autoSuspendOption">
 			<input type="checkbox" id="batteryCheck" class='option' />
-			<label for="batteryCheck" class="cbLabel">Only auto-suspend if running on battery</label>
+			<label for="batteryCheck" class="cbLabel">Suspenda somente quando estiver conectado na bateria</label>
 		</div>
 		<div class="formRow">
 			<input type="checkbox" id="unsuspendOnFocus" class='option' />
-			<label for="unsuspendOnFocus" class="cbLabel">Automatically unsuspend tab when it is viewed</label>
+			<label for="unsuspendOnFocus" class="cbLabel">Restaurar automaticamente quando aba for selecionada</label>
 		</div>
 		<div class="formRow">
 			<input type="checkbox" id="addContextMenu" class='option' />
-			<label for="addContextMenu" class="cbLabel">Add The Great Suspender to right-click context menu</label>
+			<label for="addContextMenu" class="cbLabel">Mostrar menu de contexto no atalho do chrome </label>
 		</div>
 
 		<div class="formRow">
-			<label id="themeLbl" for="theme">Theme:</label>
+			<label id="themeLbl" for="theme">Tema:</label>
 			<br />
 			<select id="theme" class='option' style="margin-top: 8px;">
-				<option value="light">Light</option>
-				<option value="dark">Dark</option>
+				<option value="light">Claro</option>
+				<option value="dark">Escuro</option>
 			</select>
 		</div>
 
-		<div class="formRow">
-			<label id="previewLbl" for="preview">Screen capturing:</label>
-			<br />
-			<select id="preview" class='option' style="margin-top: 8px;">
-				<option value="0">Disabled</option>
-				<option value="1">Capture visible screen only</option>
-				<option value="2">Capture entire page</option>
-			</select>
-		</div>
-		<div id="previewNote" class="gsNote">The screen capturing feature is experimental and can cause significant CPU usage.
-		<br />If you notice strange behaviour such as tabs taking a long time to suspend, or chrome crashing unexpectedly, try turning this feature off.</div>
 
 
 		<!-- <input type="checkbox" id="ignoreCache" class='option'></input>
 		<label for="ignoreCache">Skip browser cache when reloading tab</label>
 		<br /> -->
 
-		<h2>Whitelist&nbsp;
+		<h2>Lista de exceções&nbsp;
 			<i class="fa fa-question-circle" title="
-Add the URL of each page you want to whitelist on a new line. For example:
+Adicione o link de uma página que você não quer que seja suspensa em uma nova linha. Por exemplo:
 
-https://play.google.com/music/listen
-https://mail.google.com
+https://www.youtube.com/
+http://atarde.uol.com.br/
 
-You can specify part of the url instead to whitelist multiple sites in one go:
+Você também pode especificar apenas parte da url para selecionar variás páginas de um mesmo domínio:
 
 google.com
 
-You can also specify regular expressions by enclosing the text in forward slashes:
+Você também pode uitilizar expressões regulares fechando o texto utilizando barras:
 
 /^https:.*google\.com/
 ">
@@ -120,10 +104,29 @@ You can also specify regular expressions by enclosing the text in forward slashe
 		</h2>
 		<textarea id="whitelist" class='option' rows="10" cols="50"></textarea>
 
+		<h2>Configurações de captura de tela</h2>
+		<div class="formRow">
+			<input type="checkbox" id="preview" class='option' />
+			<label for="preview" class="cbLabel">
+				Ativar captura de tela<br />
+				<span class="lesserText">A captura de tela utiliza memória ram</span>
+			</label>
+		</div>
+
+		<div id="previewQualitySection" class="formRow">
+			<input type="checkbox" id="previewQuality" class='option' />
+			<label for="previewQuality" class="cbLabel">
+				Usar captura de tela de alta qualidade<br />
+				<span class="lesserText">A captura de tela de alta qualidade vai utilizar ainda mais memória</span>
+			</label>
+		</div>
+		<div id="previewQualityNote" class="gsNote">Adicionar o modo de captura de tela vai utilizar memória ram e um uso elevado de cpu. Ativando a captura de alta qualidade vai ocupar ainda mais memória e cpu.<br />
+		E também essa é uma função experimental. E se você notar algum comportamento estranho nas abas ou no próprio chrome, Eu sugiro que você não utilize essa função.</div>
+
 		<hr />
 
-		<a href="javascript:void(0)" id="cancelBtn" class="fl btn btnNeg">Cancel</a>
-		<a href="javascript:void(0)" id="saveBtn" class="fr btn">Save settings</a>
+		<a href="javascript:void(0)" id="cancelBtn" class="fl btn btnNeg">Cancelar</a>
+		<a href="javascript:void(0)" id="saveBtn" class="fr btn">Salvar configurações</a>
 
 	</div>
 

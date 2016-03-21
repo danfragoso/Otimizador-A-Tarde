@@ -14,6 +14,7 @@ var tgs = (function () {
     'use strict';
 
     var debug = false,
+        useClean = false,
         sessionId,
         lastSelectedTabs = [],
         globalCurrentTabId,
@@ -22,11 +23,7 @@ var tgs = (function () {
         lastStatus = 'normal',
         notice = {},
         contextMenuItems = false,
-        unsuspendRequestList = {},
-        audibleTabsList = {},
-        lastTabCloseTimestamp = new Date(),
-        suspensionActiveIcon = '/img/icon19.png',
-        suspensionPausedIcon = '/img/icon19b.png';
+        unsuspendRequestList = {};
 
 
     //set gloabl sessionId
@@ -39,7 +36,7 @@ var tgs = (function () {
         }
     }
 
-    function saveSuspendData(tab, tabPropertyOverrides, callback) {
+    function saveSuspendData(tab, callback) {
 
         var tabProperties,
             favUrl;
@@ -59,10 +56,6 @@ var tgs = (function () {
             index: tab.index,
             windowId: tab.windowId
         };
-
-        Object.keys(tabPropertyOverrides).forEach(function (prop) {
-            tabProperties[prop] = tabPropertyOverrides[prop];
-        });
 
         //add suspend information to suspendedTabInfo
         gsUtils.addSuspendedTabInfo(tabProperties, function() {
@@ -89,11 +82,6 @@ var tgs = (function () {
         return dontSuspendPinned && tab.pinned;
     }
 
-    function isAudibleTab(tab) {
-        var dontSuspendAudible = gsUtils.getOption(gsUtils.IGNORE_AUDIO);
-        return dontSuspendAudible && tab.audible;
-    }
-
     function isExcluded(tab) {
         if (tab.active) {
             return true;
@@ -112,32 +100,28 @@ var tgs = (function () {
         if (isPinnedTab(tab)) {
             return true;
         }
-
-        if (isAudibleTab(tab)) {
-            return true;
-        }
         return false;
     }
 
     function confirmTabSuspension(tab) {
 
         //ask the tab to suspend itself
-        saveSuspendData(tab, {}, function() {
+        saveSuspendData(tab, function() {
 
             //if we need to save a preview image
-            if (gsUtils.getOption(gsUtils.SCREEN_CAPTURE) !== '0') {
+            if (gsUtils.getOption(gsUtils.SHOW_PREVIEW)) {
                 chrome.tabs.executeScript(tab.id, { file: 'js/html2canvas.min.js' }, function () {
                     sendMessageToTab(tab.id, {
                         action: 'generatePreview',
-                        suspendedUrl: gsUtils.generateSuspendedUrl(tab),
-                        screenCapture: gsUtils.getOption(gsUtils.SCREEN_CAPTURE)
+                        suspendedUrl: gsUtils.generateSuspendedUrl(tab.url, useClean),
+                        previewQuality: gsUtils.getOption(gsUtils.PREVIEW_QUALITY) ? 0.8 : 0.1
                     });
                 });
 
             } else {
                 sendMessageToTab(tab.id, {
                     action: 'confirmTabSuspend',
-                    suspendedUrl: gsUtils.generateSuspendedUrl(tab)
+                    suspendedUrl: gsUtils.generateSuspendedUrl(tab.url, useClean)
                 });
             }
         });
@@ -214,39 +198,6 @@ var tgs = (function () {
         });
     }
 
-    function openLinkInSuspendedTab(parentTab, linkedUrl) {
-
-        var googleParams = linkedUrl.match(/^https:\/\/www.google.[^\/]+.\/url\?(.*)/);
-
-        //test if the linkedUrl is a google search result
-        if (googleParams && googleParams.length === 2) {
-            googleParams = googleParams[1].split('&');
-
-            googleParams.forEach(function (param) {
-                if (param.indexOf('url=') === 0) {
-                    linkedUrl = decodeURIComponent(param.substring(4));
-                }
-            });
-        }
-
-        var fakeTabProperties = {
-                url: linkedUrl,
-                title: linkedUrl
-            },
-            suspendedUrl = gsUtils.generateSuspendedUrl(fakeTabProperties),
-            index = parentTab.index + 1,
-            tabPropertyOverrides = {
-                url: linkedUrl,
-                fakeTab: true,
-                pinned: false,
-                index: index
-            };
-
-        saveSuspendData(parentTab, tabPropertyOverrides, function() {
-            chrome.tabs.create({ url: suspendedUrl, index: index, active: false });
-        });
-    }
-
     function suspendHighlightedTab() {
         chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
             if (tabs.length > 0) {
@@ -264,23 +215,11 @@ var tgs = (function () {
     }
 
     function suspendAllTabs() {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            var curWindowId = tabs[0].windowId;
-            chrome.windows.get(curWindowId, {populate: true}, function(curWindow) {
-                curWindow.tabs.forEach(function (tab) {
-                    if (!tab.active) {
-                        requestTabSuspension(tab, true);
-                    }
-                });
-            });
-        });
-    }
-
-
-    function suspendAllTabsInAllWindows() {
-        chrome.tabs.query({}, function (tabs) {
-            tabs.forEach(function (currentTab) {
-                requestTabSuspension(currentTab, true);
+        chrome.windows.getLastFocused({populate: true}, function(curWindow) {
+            curWindow.tabs.forEach(function (tab) {
+                if (!tab.active) {
+                    requestTabSuspension(tab, true);
+                }
             });
         });
     }
@@ -290,22 +229,12 @@ var tgs = (function () {
     }
 
     function unsuspendAllTabs() {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            var curWindowId = tabs[0].windowId;
-            chrome.windows.get(curWindowId, {populate: true}, function(curWindow) {
-                curWindow.tabs.forEach(function (currentTab) {
-                    if (isSuspended(currentTab)) {
-                        unsuspendTab(currentTab);
-                    }
-                });
-            });
-        });
-    }
 
-    function unsuspendAllTabsInAllWindows() {
-        chrome.tabs.query({}, function (tabs) {
-            tabs.forEach(function (currentTab) {
-                if (isSuspended(currentTab)) unsuspendTab(currentTab);
+        chrome.windows.getLastFocused({populate: true}, function(curWindow) {
+            curWindow.tabs.forEach(function (currentTab) {
+                if (isSuspended(currentTab)) {
+                    unsuspendTab(currentTab);
+                }
             });
         });
     }
@@ -363,48 +292,21 @@ var tgs = (function () {
     }
 
     function unsuspendTab(tab) {
-        var url = gsUtils.getSuspendedUrl(tab.url),
-            views,
-            result;
+        var url = gsUtils.getSuspendedUrl(tab.url.split('suspended.html')[1]);
+        chrome.tabs.update(tab.id, {url: url}, function() {
+            if (chrome.runtime.lastError) {
+                console.log(chrome.runtime.lastError.message);
+            }
+        });
 
         //bit of a hack here as using the chrome.tabs.update method will not allow
         //me to 'replace' the url - leaving a suspended tab in the history
-        views = chrome.extension.getViews({type: 'tab', "windowId": tab.windowId});
-        result = views.some(function (view) {
-            if (view.tabId === tab.id) {
-                view.location.replace(url);
-                return true;
+        /*tabs = chrome.extension.getViews({type: 'tab'});
+        for (i = 0; i < tabs.length; i++) {
+            if (tabs[i].location.href === tab.url) {
+                tabs[i].location.replace(url);
             }
-        });
-
-        //if we failed to find the tab with the above method then try to update it directly
-        if (!result) {
-            chrome.tabs.update(tab.id, {url: url}, function() {
-                if (chrome.runtime.lastError) {
-                    console.log(chrome.runtime.lastError.message);
-                }
-            });
-        }
-    }
-
-    function handleWindowFocusChanged(windowId) {
-
-        if (debug) {
-            console.log('window changed: ' + windowId);
-        }
-
-        chrome.tabs.query({active: true, windowId: windowId}, function(tabs) {
-            if (tabs && tabs.length === 1) {
-
-                lastSelectedTabs[windowId] = tabs[0].id;
-                globalCurrentTabId = tabs[0].id;
-
-                //update icon
-                requestTabInfo(tabs[0].id, function (info) {
-                    updateIcon(info.status);
-                });
-            }
-        });
+        }*/
     }
 
     function handleTabFocusChanged(tabId, windowId) {
@@ -425,17 +327,6 @@ var tgs = (function () {
             resetTabTimer(lastSelectedTab);
         }
 
-        //update icon
-        requestTabInfo(tabId, function (info) {
-            updateIcon(info.status);
-        });
-
-        //check to see if we have just recently removed a tab
-        //if so, assume this is an 'accidental' tab focus and do not unsuspend
-        if (lastTabCloseTimestamp > (new Date()) - 500) {
-            if (debug) console.log('ignoring tab focus');
-            return;
-        }
 
         //pause for a bit before assuming we're on a new tab as some users
         //will key through intermediate tabs to get to the one they want.
@@ -451,6 +342,11 @@ var tgs = (function () {
 
     function handleNewTabFocus(tabId) {
         var unsuspend = gsUtils.getOption(gsUtils.UNSUSPEND_ON_FOCUS);
+
+        //update icon
+        requestTabInfo(tabId, function (info) {
+            updateIcon(info.status);
+        });
 
         //if pref is set, then unsuspend newly focused tab
         if (unsuspend) {
@@ -618,9 +514,6 @@ var tgs = (function () {
 
                     //recover tabs silently
                     checkForCrashRecovery(true);
-
-                    //show update screen
-                    chrome.tabs.create({url: chrome.extension.getURL('update.html')});
                 }
 
             }
@@ -641,7 +534,9 @@ var tgs = (function () {
         }
 
         //add context menu items
-        buildContextMenu(contextMenus);
+        if (contextMenus) {
+            buildContextMenu();
+        }
     }
 
     function checkForNotices() {
@@ -688,7 +583,6 @@ var tgs = (function () {
     //suspended: a tab that is suspended
     //never: suspension timer set to 'never suspend'
     //formInput: a tab that has a partially completed form (and IGNORE_FORMS is true)
-    //audible: a tab that is playing audio (and IGNORE_AUDIO is true)
     //tempWhitelist: a tab that has been manually paused
     //pinned: a pinned tab (and IGNORE_PINNED is true)
     //whitelisted: a tab that has been whitelisted
@@ -698,11 +592,11 @@ var tgs = (function () {
     function requestTabInfo(tabId, callback) {
 
         var info = {
-                windowId: '',
-                tabId: '',
-                status: 'unknown',
-                timerUp: '-'
-            };
+            windowId: '',
+            tabId: '',
+            status: 'unknown',
+            timerUp: '-'
+        };
         tabId = tabId || globalCurrentTabId;
 
         if (typeof(tabId) === 'undefined') {
@@ -727,7 +621,7 @@ var tgs = (function () {
                     callback(info);
 
                 //check if it has already been suspended
-                } else if (isSuspended(tab)) {
+                } else  if (isSuspended(tab)) {
                     info.status = 'suspended';
                     callback(info);
 
@@ -775,10 +669,6 @@ var tgs = (function () {
         } else if (status === 'normal' && isPinnedTab(tab)) {
             status = 'pinned';
 
-        //check audible tab
-        } else if (status === 'normal' && isAudibleTab(tab)) {
-            status = 'audible';
-
         //check never suspend
         } else if (status === 'normal' && suspendTime === "0") {
             status = 'never';
@@ -796,8 +686,15 @@ var tgs = (function () {
 
     //change the icon to either active or inactive
     function updateIcon(status) {
-        var icon = status !== 'normal' ? suspensionPausedIcon : suspensionActiveIcon;
+        var icon = '/img/icon19.png',
+            dontSuspendForms = gsUtils.getOption(gsUtils.IGNORE_FORMS),
+            dontSuspendPinned = gsUtils.getOption(gsUtils.IGNORE_PINNED);
+
         lastStatus = status;
+
+        if (status !== 'normal') {
+            icon = '/img/icon19b.png';
+        }
         chrome.browserAction.setIcon({path: icon});
     }
 
@@ -805,77 +702,72 @@ var tgs = (function () {
 
     //HANDLERS FOR RIGHT-CLICK CONTEXT MENU
 
-    function buildContextMenu(showContextMenu) {
+    function buildContextMenu() {
 
-        var currentDisplayLevel = contextMenuItems ? contextMenuItems.length : 0,
-            allContexts = ["page", "frame", "selection", "editable", "image",
-                "video", "audio", "browser_action", "page_action"
-            ];
+        if (contextMenuItems && contextMenuItems.length > 0) {
+            return;
+        }
 
-        chrome.contextMenus.removeAll();
         contextMenuItems = [];
 
-        //Open tab suspended
+        //make right click Context Menu for Chrome
         contextMenuItems.push(chrome.contextMenus.create({
-            title: "Open link in new suspended tab",
-            contexts:["link"],
-            onclick: function (info, tab) {
-                openLinkInSuspendedTab(tab, info.linkUrl);
-            }
+           type: "separator"
         }));
 
-        if (showContextMenu) {
+        //Suspend present tab
+        contextMenuItems.push(chrome.contextMenus.create({
+           title: "Suspend Tab",
+           contexts:["all"],
+           onclick: suspendHighlightedTab
+        }));
 
-            //make right click Context Menu for Chrome
-            contextMenuItems.push(chrome.contextMenus.create({
-                type: "separator"
-            }));
+        //Add present tab to temporary whitelist
+        contextMenuItems.push(chrome.contextMenus.create({
+           title: "Don't suspend for now",
+           contexts:["all"],
+           onclick: temporarilyWhitelistHighlightedTab
+        }));
 
-            //Suspend present tab
-            contextMenuItems.push(chrome.contextMenus.create({
-                title: "Suspend Tab",
-                contexts: allContexts,
-                onclick: suspendHighlightedTab
-            }));
+        //Add present tab to permenant whitelist
+        contextMenuItems.push(chrome.contextMenus.create({
+           title: "Never suspend this site",
+           contexts:["all"],
+           onclick: whitelistHighlightedTab
+        }));
 
-            //Add present tab to temporary whitelist
-            contextMenuItems.push(chrome.contextMenus.create({
-                title: "Don't suspend for now",
-                contexts: allContexts,
-                onclick: temporarilyWhitelistHighlightedTab
-            }));
+        //Suspend all the tabs
+        contextMenuItems.push(chrome.contextMenus.create({
+           title: "Suspend All Tabs",
+           contexts:["all"],
+           onclick: suspendAllTabs
+        }));
 
-            //Add present tab to permenant whitelist
-            contextMenuItems.push(chrome.contextMenus.create({
-                title: "Never suspend this site",
-                contexts: allContexts,
-                onclick: whitelistHighlightedTab
-            }));
+        //Unsuspend all the tabs
+        contextMenuItems.push(chrome.contextMenus.create({
+           title: "Unsuspend All Tabs",
+           contexts:["all"],
+           onclick: unsuspendAllTabs
+        }));
 
-            //Suspend all the tabs
-            contextMenuItems.push(chrome.contextMenus.create({
-                title: "Suspend All Tabs",
-                contexts: allContexts,
-                onclick: suspendAllTabs
-            }));
+         //Open settings page
+        contextMenuItems.push(chrome.contextMenus.create({
+           title: "Settings",
+           contexts:["all"],
+           onclick: function(e) {
+               chrome.tabs.create({
+                    url: chrome.extension.getURL('options.html')
+               });
+            }
+        }));
+    }
+    function removeContextMenu() {
 
-            //Unsuspend all the tabs
-            contextMenuItems.push(chrome.contextMenus.create({
-                title: "Unsuspend All Tabs",
-                contexts: allContexts,
-                onclick: unsuspendAllTabs
-            }));
-
-             //Open settings page
-            contextMenuItems.push(chrome.contextMenus.create({
-                title: "Settings",
-                contexts: allContexts,
-                onclick: function(e) {
-                    chrome.tabs.create({
-                        url: chrome.extension.getURL('options.html')
-                    });
-                }
-            }));
+        if (contextMenuItems && contextMenuItems.length > 0) {
+            contextMenuItems.forEach(function (item) {
+                chrome.contextMenus.remove(item);
+            });
+            contextMenuItems = false;
         }
     }
 
@@ -896,10 +788,18 @@ var tgs = (function () {
             unsuspendAllTabs();
 
         } else if (command === '5-suspend-all-windows') {
-            suspendAllTabsInAllWindows();
+            chrome.tabs.query({}, function (tabs) {
+                tabs.forEach(function (currentTab) {
+                    requestTabSuspension(currentTab, true);
+                });
+            });
 
         } else if (command === '6-unsuspend-all-windows') {
-            unsuspendAllTabsInAllWindows();
+            chrome.tabs.query({}, function (tabs) {
+                tabs.forEach(function (currentTab) {
+                    if (isSuspended(currentTab)) unsuspendTab(currentTab);
+                });
+            });
         }
     });
 
@@ -926,9 +826,9 @@ var tgs = (function () {
         case 'prefs':
             sendResponse({
                 dontSuspendForms: gsUtils.getOption(gsUtils.IGNORE_FORMS),
+                showPreview: gsUtils.getOption(gsUtils.SHOW_PREVIEW),
                 suspendTime: gsUtils.getOption(gsUtils.SUSPEND_TIME),
-                screenCapture: gsUtils.getOption(gsUtils.SCREEN_CAPTURE),
-                tabId: sender.tab.id
+                previewQuality: gsUtils.getOption(gsUtils.PREVIEW_QUALITY) ? 0.8 : 0.1
             });
             break;
 
@@ -1007,23 +907,20 @@ var tgs = (function () {
     }
 
 
-    //attach listener to runtime
+    // attach listener to runtime
     chrome.runtime.onMessage.addListener(messageRequestListener);
-    //attach listener to runtime for external messages, to allow
-    //interoperability with other extensions in the manner of an API
+    // attach listener to runtime for external messages, to allow
+    // interoperability with other extensions in the manner of an API
     chrome.runtime.onMessageExternal.addListener(messageRequestListener);
 
-    //wishful thinking here that a synchronus iteration through tab views will enable them
-    //to unsuspend before the application closes
-    chrome.runtime.onSuspend.addListener(function () {
-        chrome.extension.getViews({type: 'tab'}).forEach(function (view) {
-            view.location.reload();
-        });
-    });
-
-    //listen for focus changes
+    // listen for focus changes
     chrome.windows.onFocusChanged.addListener(function (windowId) {
-        handleWindowFocusChanged(windowId);
+
+        chrome.tabs.query({active: true, windowId: windowId}, function(tabs) {
+            if (tabs && tabs.length === 1) {
+               handleTabFocusChanged(tabs[0].id, tabs[0].windowId);
+            }
+        });
     });
     chrome.tabs.onActivated.addListener(function (activeInfo) {
         handleTabFocusChanged(activeInfo.tabId, activeInfo.windowId);
@@ -1039,24 +936,11 @@ var tgs = (function () {
         if (unsuspendRequestList[tabId]) {
             delete unsuspendRequestList[tabId];
         }
-        lastTabCloseTimestamp = new Date();
     });
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-
         //only save session if the tab url has changed
         if (changeInfo && changeInfo.url) {
             queueSessionTimer();
-        }
-
-        //check for tab playing audio
-        if (tab.audible) {
-            audibleTabsList[tab.id] = true;
-
-        //else check if tab WAS playing audio (and now isnt)
-        } else if (audibleTabsList[tab.id]) {
-            delete audibleTabsList[tab.id];
-            resetTabTimer(tab.id);
-            if (debug) console.log('tab finished playing audio. restarting timer: ' + tab.id);
         }
 
         //check for tab having an unsuspend request
@@ -1072,28 +956,27 @@ var tgs = (function () {
             }
         }
     });
-    chrome.windows.onCreated.addListener(function () {
+    chrome.windows.onCreated.addListener(function() {
         queueSessionTimer();
     });
-    chrome.windows.onRemoved.addListener(function () {
+    chrome.windows.onRemoved.addListener(function() {
         queueSessionTimer();
     });
+
 
     //tidy up history items as they are created
     chrome.history.onVisited.addListener(function (historyItem) {
 
-        var url = historyItem.url;
+        var url = historyItem.url,
+            realUrl;
 
-        if (url.indexOf('suspended.html') >= 0) {
-            url = gsUtils.getSuspendedUrl(url);
+        if (url.indexOf('suspended.html') >= 0 && url.indexOf('uri=') > 0) {
+
+            realUrl = url.split('uri=')[1];
 
             //remove suspended tab history item
             chrome.history.deleteUrl({url: historyItem.url});
-            chrome.history.addUrl({url: url}, function() {
-                if (chrome.runtime.lastError) {
-                    console.log(chrome.runtime.lastError.message);
-                }
-            });
+            chrome.history.addUrl({url: realUrl});
         }
     });
 
@@ -1114,7 +997,7 @@ var tgs = (function () {
 
     _gaq.push(['_setAccount', 'UA-52338347-1']);
     _gaq.push(['_setCustomVar', 1, 'version', chrome.runtime.getManifest().version + "", 1]);
-    _gaq.push(['_setCustomVar', 2, 'screen_capture', gsUtils.getOption(gsUtils.SCREEN_CAPTURE) + "", 1]);
+    _gaq.push(['_setCustomVar', 2, 'image_preview', gsUtils.getOption(gsUtils.SHOW_PREVIEW) + ": " + gsUtils.getOption(gsUtils.PREVIEW_QUALITY), 1]);
     _gaq.push(['_setCustomVar', 3, 'suspend_time', gsUtils.getOption(gsUtils.SUSPEND_TIME) + "", 1]);
     _gaq.push(['_setCustomVar', 4, 'no_nag', gsUtils.getOption(gsUtils.NO_NAG) + "", 1]);
     //_gaq.push(['_setCustomVar', 5, 'migration', gsUtils.getOption(gsUtils.UNSUSPEND_ON_FOCUS) + "", 3]);
@@ -1136,7 +1019,8 @@ var tgs = (function () {
         runStartupChecks: runStartupChecks,
         resetAllTabTimers: resetAllTabTimers,
         requestNotice: requestNotice,
-        buildContextMenu: buildContextMenu
+        buildContextMenu: buildContextMenu,
+        removeContextMenu: removeContextMenu
     };
 
 }());

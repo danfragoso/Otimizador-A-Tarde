@@ -10,51 +10,47 @@
             message;
 
         if (status === 'normal') {
-            statusDetail = 'Tab will be suspended automatically.';
+            statusDetail = 'Esta aba será suspensa automaticamente.';
             statusIconClass = 'fa fa-clock-o';
 
         } else if (status === 'special') {
-            statusDetail = 'Tab cannot be suspended.';
+            statusDetail = 'Esta aba não pode ser suspensa.';
             statusIconClass = 'fa fa-remove';
 
         } else if (status === 'suspended') {
-            statusDetail = 'Tab suspended. <a href="#">Unsuspend</a>';
+            statusDetail = 'Aba suspensa. <a href="#">Restaurar</a>';
             statusIconClass = 'fa fa-pause';
             message = 'unsuspendOne';
 
         } else if (status === 'whitelisted') {
-            statusDetail = 'Site whitelisted. <a href="#">Remove from whitelist</a>';
+            statusDetail = 'Aba com exceção. <a href="#">Remover da lista</a>';
             statusIconClass = 'fa fa-check';
             message = 'removeWhitelist';
 
-        } else if (status === 'audible') {
-            statusDetail = 'Tab is playing audio.';
-            statusIconClass = 'fa fa-volume-up';
-
         } else if (status === 'formInput') {
-            statusDetail = 'Tab is receiving form input. <a href="#">Unpause</a>';
+            statusDetail = 'Esta aba está tem texto não salvo. <a href="#">Suspender mesmo assim</a>';
             statusIconClass = 'fa fa-edit';
             message = 'undoTempWhitelist';
 
         } else if (status === 'pinned') {
-            statusDetail = 'Tab has been pinned.';
+            statusDetail = 'Esta é uma aba fixa.';
             statusIconClass = 'fa fa-thumb-tack';
 
         } else if (status === 'tempWhitelist') {
-            statusDetail = 'Tab suspension paused. <a href="#">Unpause</a>';
+            statusDetail = 'Suspensão de aba pausada. <a href="#">Restaurar</a>';
             statusIconClass = 'fa fa-pause';
             message = 'undoTempWhitelist';
 
         } else if (status === 'never') {
-            statusDetail = 'Automatic tab suspension disabled.';
+            statusDetail = 'Suspensão automatica de aba desativada.';
             statusIconClass = 'fa fa-ban';
 
         } else if (status === 'noConnectivity') {
-            statusDetail = 'No network connection.';
+            statusDetail = 'Sem conexão com a internet.';
             statusIconClass = 'fa fa-pause';
 
         } else if (status === 'charging') {
-            statusDetail = 'Connected to power source.';
+            statusDetail = 'Conectado ao carregador.';
             statusIconClass = 'fa fa-pause';
         }
 

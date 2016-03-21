@@ -121,12 +121,12 @@
 
             if (previewsEl) {
                 previewsEl.onclick = function (e) {
-                    gsUtils.setOption(gsUtils.SCREEN_CAPTURE, '0');
+                    gsUtils.setOption(gsUtils.SHOW_PREVIEW, false);
                     window.location.reload();
                 };
 
                 //show warning if screen capturing turned on
-                if (gsUtils.getOption(gsUtils.SCREEN_CAPTURE) !== '0') {
+                if (gsUtils.getOption(gsUtils.SHOW_PREVIEW)) {
                     warningEl.style.display = 'block';
                 }
             }

@@ -1,13 +1,9 @@
-/*global window, document, chrome, console */
-var tabId;
-
-document.getElementById('gsTitle').innerHTML = chrome.extension.getBackgroundPage().gsUtils.getSuspendedTitle(window.location.href);
-chrome.tabs.getCurrent(function(tab) {
-  tabId = tab.id;
-});
+/*global window, document, chrome, console, Image, gsUtils */
 
 (function () {
 
+    //removed strict mode for compatibility with older versions of chrome
+    //'use strict';
     var gsUtils = chrome.extension.getBackgroundPage().gsUtils;
 
     function generateFaviconUri(url, callback) {
@@ -33,11 +29,15 @@ chrome.tabs.getCurrent(function(tab) {
         document.getElementById('gsFavicon').setAttribute('href', favicon);
     }
 
+    function htmlEncode(html) {
+        return document.createElement('a').appendChild(document.createTextNode(html)).parentNode.innerHTML;
+    }
+
     function attemptTabSuspend() {
-        var url = gsUtils.getSuspendedUrl(window.location.href),
+        var url = gsUtils.getSuspendedUrl(window.location.hash),
             tabProperties,
             rootUrlStr = gsUtils.getRootUrl(url),
-            showPreview = gsUtils.getOption(gsUtils.SCREEN_CAPTURE) !== '0',
+            showPreview = gsUtils.getOption(gsUtils.SHOW_PREVIEW),
             favicon,
             title,
             bodyEl = document.getElementsByTagName('body')[0],
@@ -45,7 +45,6 @@ chrome.tabs.getCurrent(function(tab) {
             titleEl = document.getElementById('gsTitle'),
             topBarEl = document.getElementById('gsTopBarTitle'),
             whitelistEl = document.getElementById('gsWhitelistLink'),
-            linkedUrlEl = document.getElementById('gsLinkedUrl'),
             topBarImgEl = document.getElementById('gsTopBarImg');
 
         //try to fetch saved tab information for this url
@@ -53,13 +52,10 @@ chrome.tabs.getCurrent(function(tab) {
 
             //if we are missing some suspend information for this tab
             if (!tabProperties) {
-                tabProperties = {
-                    url: url,
-                    favicon: 'chrome://favicon/' + url
-                };
+                tabProperties = {url: url};
             }
 
-            //set preview image
+            //set favicon and preview image
             if (showPreview) {
                 gsUtils.fetchPreviewImage(url, function (previewUrl) {
                     if (previewUrl && previewUrl !== null) {
@@ -77,17 +73,11 @@ chrome.tabs.getCurrent(function(tab) {
                     }
                 });
 
-                //allow vertical scrollbar if we are using high quality previews
-                if (gsUtils.getOption(gsUtils.SCREEN_CAPTURE) === '2') {
-                    document.body.style['overflow-x'] = 'auto';
-                }
-
             } else {
                 messageEl.style.display = 'table-cell';
             }
 
-            //set favicon
-            favicon = tabProperties.favicon;
+            favicon = tabProperties.favicon || 'chrome://favicon/' + url;
 
             generateFaviconUri(favicon, function (faviconUrl) {
                 setFavicon(faviconUrl);
@@ -95,27 +85,18 @@ chrome.tabs.getCurrent(function(tab) {
 
             //populate suspended tab bar
             title = tabProperties.title ? tabProperties.title : rootUrlStr;
-            title = title.indexOf('<') < 0 ? title : gsUtils.htmlEncode(title);
+            title = title.indexOf('<') < 0 ? title : htmlEncode(title);
             titleEl.innerHTML = title;
             topBarEl.innerHTML = title;
             topBarEl.setAttribute('href', url);
+            whitelistEl.innerText = 'Adicionar ' + rootUrlStr + ' a lista de exceções';
+            whitelistEl.setAttribute('data-text', rootUrlStr);
             topBarImgEl.setAttribute('src', favicon);
-
-            if (tabProperties.fakeTab && tabProperties.url) {
-                linkedUrlEl.style.display = 'block';
-                linkedUrlEl.setAttribute('href', tabProperties.url);
-                linkedUrlEl.innerHTML = tabProperties.url;
-                whitelistEl.style.display = 'none';
-
-            } else {
-                whitelistEl.innerText = 'Add ' + rootUrlStr + ' to whitelist';
-                whitelistEl.setAttribute('data-text', rootUrlStr);
-            }
         });
     }
 
     function unsuspendTab() {
-        var url = gsUtils.getSuspendedUrl(window.location.href);
+        var url = gsUtils.getSuspendedUrl(window.location.hash);
         window.location.replace(url);
     }
 

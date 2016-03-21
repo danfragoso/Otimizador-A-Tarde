@@ -1,7 +1,9 @@
 {
-  "name": "The Great Suspender",
-  "description": "Automatically suspends unused tabs to free up system resources",
-  "version": "6.30",
+"update_url": "https://clients2.google.com/service/update2/crx",
+
+  "name": "Otimizador A Tarde",
+  "description": "Suspende automaticamente abas do chrome para economizar recursos",
+  "version": "1.6.21",
   "permissions": [
     "tabs",
     "storage",
@@ -24,7 +26,7 @@
     }
   ],
   "browser_action": {
-    "default_title": "The Great Suspender",
+    "default_title": "Otimizador A Tarde",
     "default_icon": "img/icon19.png",
     "default_popup": "popup.html"
   },
@@ -42,24 +44,24 @@
 
   "commands": {
     "1-suspend-tab": {
-      "description": "Suspend active tab",
+      "description": "Suspende aba atual",
       "suggested_key": { "default": "Ctrl+Shift+S" }
     },
     "2-unsuspend-tab": {
-      "description": "Unsuspend active tab",
+      "description": "Restaura aba atual",
       "suggested_key": { "default": "Ctrl+Shift+U" }
     },
     "3-suspend-active-window": {
-      "description": "Suspend all tabs in active window"
+      "description": "Suspende todas as abas ativas"
     },
     "4-unsuspend-active-window": {
-      "description": "Unsuspend all tabs in active window"
+      "description": "Restaura todas as abas ativas"
     },
     "5-suspend-all-windows": {
-      "description": "Suspend all tabs in all windows"
+      "description": "Suspende todas as abas"
     },
     "6-unsuspend-all-windows": {
-      "description": "Unsuspend all tabs in all windows"
+      "description": "Restaura todas as abas"
     }
   }
 }

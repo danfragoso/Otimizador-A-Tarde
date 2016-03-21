@@ -68,7 +68,7 @@ a {
   cursor: pointer;
 }
 #gsTopBar  {
-   	position: absolute;
+   	position: fixed;
     background: #efefef;
     top: 0;
     padding: 15px 0;
@@ -99,17 +99,6 @@ a {
 #gsWhitelistLink {
     text-decoration: underline;
     cursor: pointer;
-}
-#gsLinkedUrl {
-    text-decoration: underline;
-    cursor: pointer;
-    display: none;
-    width: 80%;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    margin-left: auto;
-    margin-right: auto;
-    overflow: hidden;
 }
 #gsPreview {
     width: 100%;

@@ -10,8 +10,7 @@
 (function () {
     'use strict';
 
-    var tabId,
-        readyStateCheckInterval,
+    var readyStateCheckInterval,
         inputState = false,
         tempWhitelist = false,
         timerJob,
@@ -24,38 +23,34 @@
 
     function init() {
 
+        var scrollPos;
+
         //do startup jobs
         reportState(false);
         requestPreferences(function(response) {
 
-            //set timer job
             if (response && response.suspendTime > 0) {
 
                 suspendTime = response.suspendTime * (1000*60);
+
+                //set timer job
                 timerJob = setTimerJob(suspendTime);
+
+                //add form input listener
+                if (response.dontSuspendForms) {
+                    setFormInputJob();
+                }
 
             } else {
                 suspendTime = 0;
             }
-
-            //add form input listener
-            if (response && response.dontSuspendForms) {
-                setFormInputJob();
-            }
-
-            if (response && response.tabId) {
-
-                //set tabId
-                tabId = response.tabId;
-
-                //handle auto-scrolling
-                var scrollPos = getCookieValue('gsScrollPos-' + tabId);
-                if (scrollPos && scrollPos !== "") {
-                    document.body.scrollTop = scrollPos;
-                    setCookieValue('gsScrollPos-' + tabId, '');
-                }
-            }
         });
+
+        scrollPos = getScrollPos();
+        if (scrollPos && scrollPos !== "") {
+            document.body.scrollTop = scrollPos;
+            setScrollPos(true);
+        }
     }
 
     function calculateState() {
@@ -79,22 +74,23 @@
         }
     }
 
-    function setCookieValue(key, value) {
-        document.cookie = key + '=' + value;
+    function setScrollPos(reset) {
+        reset = reset || false;
+        var val = reset ? '' : document.body.scrollTop;
+        document.cookie = "gsScrollPos=" + val;
     }
 
-    function getCookieValue(key) {
+    function getScrollPos() {
 
-        var keyStart = document.cookie.indexOf(key + '='),
-            keyEnd,
-            value = false;
-
+        var key = "gsScrollPos=",
+            keyStart = document.cookie.indexOf(key),
+            keyEnd;
         if (keyStart >= 0) {
             keyEnd = document.cookie.indexOf(';', keyStart) > 0 ? document.cookie.indexOf(';', keyStart) : document.cookie.length;
-            value = document.cookie.substring(keyStart + key.length + 1, keyEnd);
-            value = value.length > 0 ? value : false;
+            return document.cookie.substring(keyStart + key.length, keyEnd);
+        } else {
+            return false;
         }
-        return value;
     }
 
     function handlePreviewError(suspendedUrl, err) {
@@ -106,13 +102,12 @@
         suspendTab(suspendedUrl);
     }
 
-    function generatePreviewImg(suspendedUrl, screenCapture) {
+    function generatePreviewImg(suspendedUrl, previewQuality) {
         var elementCount = document.getElementsByTagName('*').length,
             processing = true,
-            timer = new Date(),
-            height = 0;
+            timer = new Date();
 
-        setCookieValue('gsScrollPos-' + tabId, document.body.scrollTop);
+        setScrollPos();
 
         //safety check here. don't try to use html2canvas if the page has more than 10000 elements
         if (elementCount < 10000) {
@@ -125,26 +120,17 @@
                 }
             }, 30000);
 
-            //if preview quality is high then capture the whole screen
-            if (screenCapture === '2') {
-                height = Math.max(document.body.scrollHeight,
-                    document.body.offsetHeight,
-                    document.documentElement.clientHeight,
-                    document.documentElement.scrollHeight,
-                    document.documentElement.offsetHeight);
-            } else {
-                height = Math.min(document.body.offsetHeight, window.innerHeight);
-            }
 
             html2canvas(document.body,{
-                height: height,
+                height: Math.min(document.body.offsetHeight, window.innerHeight),
                 width: document.body.clientWidth,
                 imageTimeout: 1000,
                 onrendered: function(canvas) {
                     if (processing) {
                         processing = false;
                         timer = (new Date() - timer) / 1000;
-                        var dataUrl = canvas.toDataURL('image/webp', 0.8);
+                        var quality =  previewQuality || 0.1,
+                            dataUrl = canvas.toDataURL('image/webp', quality);
                         chrome.runtime.sendMessage({
                             action: 'savePreviewData',
                             previewUrl: dataUrl,
@@ -260,13 +246,13 @@
 
         //listen for preview request
         case 'generatePreview':
-            generatePreviewImg(request.suspendedUrl, request.screenCapture);
+            generatePreviewImg(request.suspendedUrl, request.previewQuality);
             break;
 
         //listen for suspend request
         case 'confirmTabSuspend':
             if (request.suspendedUrl) {
-                setCookieValue('gsScrollPos-' + tabId, document.body.scrollTop);
+                setScrollPos();
                 suspendTab(request.suspendedUrl);
             }
             break;
