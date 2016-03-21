@@ -39,14 +39,14 @@
             var defaults = {};
             defaults[this.SHOW_PREVIEW] = false;
             defaults[this.PREVIEW_QUALITY] = false;
-            defaults[this.ONLINE_CHECK] = false;
+            defaults[this.ONLINE_CHECK] = true;
             defaults[this.BATTERY_CHECK] = false;
-            defaults[this.UNSUSPEND_ON_FOCUS] = false;
+            defaults[this.UNSUSPEND_ON_FOCUS] = true;
             defaults[this.IGNORE_PINNED] = true;
             defaults[this.IGNORE_FORMS] = true;
             defaults[this.IGNORE_CACHE] = false;
             defaults[this.ADD_CONTEXT] = true;
-            defaults[this.SUSPEND_TIME] = '60';
+            defaults[this.SUSPEND_TIME] = '30';
             defaults[this.NO_NAG] = false;
             defaults[this.WHITELIST] = '';
             defaults[this.THEME] = 'light';
