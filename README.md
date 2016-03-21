@@ -4,6 +4,12 @@ O Otimizador A Tarde é uma extensão para o Google Chorme que visa melhorar o des
 
 Essa ferramenta foi desenvolvida originalmente por Dean Oemcke e lançada com o nome de "The Great Suspender" sob a licença GNU GENERAL PUBLIC LICENSE (v2) de código aberto, Ela foi completamente traduzida e adaptada por mim, Danilo Fragoso, para ser usada nos computadores do Grupo A Tarde.
 
+### Download
+
+Para instalar baixe o arquivo *.crx e arraste e solte na aba de extensões do google-chrome.  
+chrome://extensions/
+V 1.6.22
+[Download](https://github.com/danfragoso/Otimizador-A-Tarde/releases/tag/v1.6.22)
 
 ### Licença
 
