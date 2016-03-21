@@ -1,6 +1,6 @@
 # <img src="/src/img/icon48.png" align="absmiddle"> Otimizador A Tarde
 
-O Otimizador A Tarde é uma extensão para o Google Chorme que visa melhorar o desempenho do computador economizando recursos como memória ram e precessamento. Ela faz isso "congelando" abas inativas por determinado periodo de tempo e recarregando a aba quando o usuário a coloca em destaque.
+O Otimizador A Tarde é uma extensão para o Google Chorme que visa melhorar o desempenho do computador economizando recursos como memória ram e precessamento. Ela faz isso "congelando" abas inativas por determinado periodo de tempo e recarrega a aba quando o usuário a coloca em destaque.
 
 Essa ferramenta foi desenvolvida originalmente por Dean Oemcke e lançada com o nome de The Great Suspender sob a licensa GNU GENERAL PUBLIC LICENSE (v2) de código aberto, Ela foi completamente traduzida e adaptada por mim, Danilo Fragoso, para ser usada nos computadores do Grupo A Tarde.
 
