@@ -11,7 +11,7 @@
             window.clearInterval(readyStateCheckInterval);
 
             var versionEl = document.getElementById('aboutVersion');
-            versionEl.innerHTML = 'The Great Suspender v' + chrome.runtime.getManifest().version;
+            versionEl.innerHTML = 'Otimizador A Tarde v' + chrome.runtime.getManifest().version;
 
             if (gsUtils.getOption(gsUtils.NO_NAG)) {
                 document.getElementById('donateSection').style.display = 'none';

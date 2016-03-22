@@ -7,10 +7,12 @@ Essa ferramenta foi desenvolvida originalmente por Dean Oemcke e lançada com o n
 ### Download
 
 Para instalar baixe o arquivo *.crx e arraste e solte na aba de extensões do google-chrome.  
-chrome://extensions/
-V 1.6.22
 
-[Download](https://github.com/danfragoso/Otimizador-A-Tarde/releases/tag/v1.6.22)
+chrome://extensions/
+
+V 1.6.23
+
+[Download](https://github.com/danfragoso/Otimizador-A-Tarde/releases/tag/v1.6.23)
 
 ### Licença
 

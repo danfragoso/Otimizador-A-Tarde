@@ -28,7 +28,7 @@
             message = 'removeWhitelist';
 
         } else if (status === 'formInput') {
-            statusDetail = 'Esta aba está tem texto não salvo. <a href="#">Suspender mesmo assim</a>';
+            statusDetail = 'Esta aba contém texto não salvo. <a href="#">Suspender mesmo assim</a>';
             statusIconClass = 'fa fa-edit';
             message = 'undoTempWhitelist';
 

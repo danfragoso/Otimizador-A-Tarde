@@ -46,7 +46,7 @@
             defaults[this.IGNORE_FORMS] = true;
             defaults[this.IGNORE_CACHE] = false;
             defaults[this.ADD_CONTEXT] = true;
-            defaults[this.SUSPEND_TIME] = '30';
+            defaults[this.SUSPEND_TIME] = '10';
             defaults[this.NO_NAG] = false;
             defaults[this.WHITELIST] = '';
             defaults[this.THEME] = 'light';

@@ -717,42 +717,42 @@ var tgs = (function () {
 
         //Suspend present tab
         contextMenuItems.push(chrome.contextMenus.create({
-           title: "Suspend Tab",
+           title: "Suspender aba",
            contexts:["all"],
            onclick: suspendHighlightedTab
         }));
 
         //Add present tab to temporary whitelist
         contextMenuItems.push(chrome.contextMenus.create({
-           title: "Don't suspend for now",
+           title: "Nao suspenda por enquanto",
            contexts:["all"],
            onclick: temporarilyWhitelistHighlightedTab
         }));
 
         //Add present tab to permenant whitelist
         contextMenuItems.push(chrome.contextMenus.create({
-           title: "Never suspend this site",
+           title: "Nunca suspenda esse site",
            contexts:["all"],
            onclick: whitelistHighlightedTab
         }));
 
         //Suspend all the tabs
         contextMenuItems.push(chrome.contextMenus.create({
-           title: "Suspend All Tabs",
+           title: "Suspender todas as abas",
            contexts:["all"],
            onclick: suspendAllTabs
         }));
 
         //Unsuspend all the tabs
         contextMenuItems.push(chrome.contextMenus.create({
-           title: "Unsuspend All Tabs",
+           title: "Restaurar todas as abas",
            contexts:["all"],
            onclick: unsuspendAllTabs
         }));
 
          //Open settings page
         contextMenuItems.push(chrome.contextMenus.create({
-           title: "Settings",
+           title: "Configuracoes",
            contexts:["all"],
            onclick: function(e) {
                chrome.tabs.create({
