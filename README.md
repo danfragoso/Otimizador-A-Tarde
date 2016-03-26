@@ -12,7 +12,7 @@ chrome://extensions/
 
 V 1.6.23
 
-[Download](https://github.com/danfragoso/Otimizador-A-Tarde/releases/tag/v1.6.23)
+[Download](https://chrome.google.com/webstore/detail/otimizador-a-tarde/iinlmighaaoljjijcahjpjjcjpdmlken?hl=pt-BR&gl=BR)
 
 ### Licença
 
