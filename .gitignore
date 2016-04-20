@@ -2,4 +2,6 @@
 **/*.pem
 /node_modules
 /build/crx/*.crx
+.DS_Store
+package.json
 /build/zip/*.zip
